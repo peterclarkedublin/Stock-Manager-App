@@ -10,7 +10,7 @@ public class TestApp
 		{
 			// create a mysql database connection
 			String myDriver = "org.gjt.mm.mysql.Driver";
-			String myUrl = "jdbc:mysql://192.168.1.100/mydb";
+			String myUrl = "jdbc:mysql://192.168.1.160/stockdb";
 			Class.forName(myDriver);
 			Connection conn = DriverManager.getConnection(myUrl, "smadmin", "admin");
 
