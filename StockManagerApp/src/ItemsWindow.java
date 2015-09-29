@@ -69,6 +69,15 @@ public class ItemsWindow extends JFrame {
 						
 				      String query1 = "SELECT * FROM item";
 				      
+//				      SELECT item.id, sku.descr, location.descr, manuf.descr
+//				      from item
+//				      inner join sku
+//				      on item.sku_id=sku.id
+//				      inner join location
+//				      on item.location_id=location.id
+//				      inner join manuf
+//				      on sku.manuf_id=manuf.id;				      
+				      
 				      // create the java statement
 				      java.sql.Statement st = conn.createStatement();
 				       
