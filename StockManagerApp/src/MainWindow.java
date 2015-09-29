@@ -64,7 +64,7 @@ public class MainWindow {
 		JButton btnLocations = new JButton("Locations");
 		btnLocations.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				new LocationsWindow();
+				new LocationsWindow("stockdb");
 			}
 		});
 		
