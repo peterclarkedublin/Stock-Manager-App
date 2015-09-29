@@ -67,23 +67,23 @@ public class ItemsWindow extends JFrame {
 					Class.forName(myDriver);
 					Connection conn = DriverManager.getConnection(myUrl, "smadmin", "admin");
 						
-				      String query1 = "SELECT * FROM item";
+				      //String query1 = "SELECT * FROM item";
 				      
-//				      SELECT item.id, sku.descr, location.descr, manuf.descr
-//				      from item
-//				      inner join sku
-//				      on item.sku_id=sku.id
-//				      inner join location
-//				      on item.location_id=location.id
-//				      inner join manuf
-//				      on sku.manuf_id=manuf.id;				      
+				      String query1 = "SELECT item.id, sku.sku, location.descr, manuf.descr\n" +
+								      "from item\n" +
+								      "inner join sku\n" +
+								      "on item.sku_id=sku.id\n" +
+								      "inner join location\n" +
+								      "on item.location_id=location.id\n" +
+								      "inner join manuf\n" +
+								      "on sku.manuf_id=manuf.id";			      
 				      
 				      // create the java statement
 				      java.sql.Statement st = conn.createStatement();
 				       
-				      // execute the query, and get a java resultset
-			
+				      // execute the query, and get a java resultset			
 				      ResultSet rs = st.executeQuery(query1);
+				      
 				      int numCounter;
 				      for(numCounter = 0; rs.next(); numCounter++);
 					  String[][] testArray = new String[numCounter][3];
@@ -91,17 +91,17 @@ public class ItemsWindow extends JFrame {
 				      numCounter = 0;
 				      
 				      while (rs.next()){
-				        int id = rs.getInt("id");
-				        int sku = rs.getInt("sku_id");
-				        int loc = rs.getInt("location_id");
+				        int id = rs.getInt(1);
+				        String sku = rs.getString(2);
+				        String loc = rs.getString(3);
 
 				         
 				        // print the results
 				        System.out.println("" + id + sku + loc);
 				        
 						testArray[numCounter][0] = String.valueOf(id);
-						testArray[numCounter][1] = String.valueOf(sku);
-						testArray[numCounter][2] = String.valueOf(loc);
+						testArray[numCounter][1] = sku;
+						testArray[numCounter][2] = loc;
 						numCounter++;
 		                     
 				      }
