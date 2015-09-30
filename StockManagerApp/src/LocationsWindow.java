@@ -12,8 +12,11 @@ import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 
 import org.eclipse.wb.swing.FocusTraversalOnArray;
 
@@ -64,49 +67,99 @@ public class LocationsWindow extends JFrame {
 		 */
 		
 		JTree tree = new JTree();
+		
+		/*
+		 * Define a class for keeping track of the parent TreeNodes.
+		 * For each new location id, an instance of this class will be made for it
+		 * so that the location id and TreeNode can be pushed on a stack.
+		 * Subsequent queries will search for locations which have these
+		 * location ids and will be added into the associated TreeNode
+		 */ 
+		class LocationNode {
+			private int id;
+			private DefaultMutableTreeNode node;
+			LocationNode (int id, DefaultMutableTreeNode node) {
+				this.id = id;
+				this.node = node;
+			}
+			public int getId () { return this.id; }
+			public DefaultMutableTreeNode getNode () { return this.node; }
+			public String toString () { return String.valueOf(this.node); }
+		}
+		
+		class TNode {
+			private int id;
+			private String descr;
+			TNode (int id, String descr) { this.id = id; this.descr = descr; }
+			public String toString () { return this.descr; }
+			public int getId () { return this.id; } 
+		}
+		
+		tree.addTreeSelectionListener(new TreeSelectionListener() {
+			public void valueChanged(TreeSelectionEvent arg0) {
+				TreePath path = ((JTree)arg0.getSource()).getSelectionPath();
+				DefaultMutableTreeNode tn = (DefaultMutableTreeNode)path.getLastPathComponent();
+				System.out.println("Tree selection path : " + ((TNode)tn.getUserObject()).getId());
+				
+			}
+		});
+		
 		try {
 			DefaultMutableTreeNode nn;
 
 			System.out.println("Querying connection " + conn);
-			ResultSet rs = conn.createStatement().executeQuery("select * from location where parent_id is null");
-			Stack levels = new Stack();
-			if (rs.next()) {
+			Stack<LocationNode> levels = null;
+			LocationNode levelNode = null;
+			ResultSet rs = null;
+			
+			// Create the master tree node
+			DefaultMutableTreeNode mn = new DefaultMutableTreeNode(new TNode (0, "All locations"));
+			// top node which will track for the parent node as the recursive search progresses
+			DefaultMutableTreeNode tn = mn;
 
-				/*
-				 * Define a class for keeping track of the parent TreeNodes.
-				 * For each new location id, an instance of this class will be made for it
-				 * so that the location id and TreeNode can be pushed on a stack.
-				 * Subsequent queries will search for locations which have these
-				 * location ids and will be added into the associated TreeNode
-				 */ 
-				class LocationNode {
-					int id;
-					DefaultMutableTreeNode node;
-					LocationNode (int id, DefaultMutableTreeNode node) {
-						this.id = id;
-						this.node = node;
-					}
+			do {
+				if (levels == null) {
+					// First go around, initialise the stack and get the top level locations
+					levels = new Stack<LocationNode>();
+					rs = conn.createStatement().executeQuery("select * from location where parent_id is null");
+					System.out.println("Initialising stack and creating master tree node");
+					
+				} else {
+					// on successive iterations, pop a location off the stack and find children of it
+					levelNode = levels.pop();
+					tn = levelNode.getNode();
+					System.out.println("Popped " + levelNode.getId() + ":" + tn.getUserObject() + " off the stack");
+					System.out.println("SQL 'select * from location where parent_id = " + levelNode.getId() + "'");
+					rs = conn.createStatement().executeQuery("select * from location where parent_id = " + levelNode.getId());
 				}
-				
-				System.out.println("Populating treeview");
-				
-				// Create the master tree node
-				DefaultMutableTreeNode tn = new DefaultMutableTreeNode("All locations");
-				
-				// Add nodes for each top level location
-				do {
-					// Create a new TreeNode for this location
-					nn = new DefaultMutableTreeNode(rs.getString(2));
-					// If this is a new node id, push it on the stack
-					if (levels.search(rs.getString(1)) == 0) levels.push(new LocationNode(rs.getInt(1), nn));
-					// Add the node to the tree
-					tn.add (nn);
-				} while (rs.next());
-				
-				tree.setModel(new DefaultTreeModel(tn));
 
-				scrollPane.setViewportView(tree);
-			}
+				if (rs.next()) {
+
+					System.out.println("Populating treeview");
+					
+					// Now add location nodes
+					do {
+						// Create a new TreeNode for this location
+						nn = new DefaultMutableTreeNode(new TNode (rs.getInt(1), rs.getString(2)));
+						
+						// If this is a new node id, push it on the stack
+						//if (levels.search(rs.getString(1)) == 0) {
+							System.out.println("Pushing " + rs.getString(1) + " onto stack");
+							levels.push(new LocationNode(rs.getInt(1), nn));
+						//}
+						
+						// Add the node to the tree
+						tn.add (nn);
+						
+					} while (rs.next());
+				}
+			
+			} while (! levels.empty());
+
+			tree.setModel(new DefaultTreeModel(mn));
+
+			scrollPane.setViewportView(tree);
+			
 		} catch (Exception e) {
 			System.out.print("\u001b[33;1m");
 			e.printStackTrace();
