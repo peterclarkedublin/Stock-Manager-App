@@ -130,6 +130,15 @@ public class ItemsWindow extends JFrame {
 		JButton btnAdjust = new JButton("Adjust");
 		btnAdjust.setBounds(341, 45, 91, 23);
 		contentPane.add(btnAdjust);
+		
+		JButton btnAddItem = new JButton("Add Item");
+		btnAddItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				new AddItemsWindow();
+			}
+		});
+		btnAddItem.setBounds(341, 79, 89, 23);
+		contentPane.add(btnAddItem);
 		contentPane.setFocusTraversalPolicy(new FocusTraversalOnArray(new Component[]{btnExamine, btnAdjust}));
 
 		setVisible(true);
@@ -141,6 +150,4 @@ public class ItemsWindow extends JFrame {
 
 
 	}
-
-
 }
