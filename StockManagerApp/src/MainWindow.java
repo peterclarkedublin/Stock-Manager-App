@@ -98,7 +98,14 @@ public class MainWindow {
 			new String[] {
 				"New Column", "New column", "New column", "New column", "New column", "New column", "New column", "New column"
 			}
-		));
+		) {
+			boolean[] columnEditables = new boolean[] {
+				false, false, false, false, false, false, false, false
+			};
+			public boolean isCellEditable(int row, int column) {
+				return columnEditables[column];
+			}
+		});
 		tblCalendar.getColumnModel().getColumn(0).setResizable(false);
 		tblCalendar.getColumnModel().getColumn(4).setResizable(false);
 		btnLocations.setBounds(232, 11, 114, 23);
@@ -152,3 +159,4 @@ public class MainWindow {
 		frmStockManagementApplication.getContentPane().setFocusTraversalPolicy(new FocusTraversalOnArray(new Component[]{tblCalendar, btnLocations, btnStock, btnPersonnel, btnAccounting, btnCustomers, btnAdministration}));
 	}
 }
+
