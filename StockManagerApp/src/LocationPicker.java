@@ -37,7 +37,6 @@ public class LocationPicker extends JDialog {
 		result.i = -1;
 		pickerWindow = this;
 		
-		setModalityType(ModalityType.APPLICATION_MODAL);
 		// create a mysql database connection
 		String myDriver = "org.gjt.mm.mysql.Driver";
 		String myUrl = "jdbc:mysql://192.168.1.160/" + db;
@@ -58,6 +57,8 @@ public class LocationPicker extends JDialog {
 		setTitle("Select a location");
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setBounds(100, 100, 350, 387);
+		setModalityType(ModalityType.APPLICATION_MODAL);
+		setResizable(false);
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (Exception e) {
@@ -203,9 +204,11 @@ public class LocationPicker extends JDialog {
 		setVisible(true);
 		pickerWindow = this;
 	}
+
 }
 
 class IntResult {
 	int i;
+	public IntResult () { this.i = -1; }
 }
 
