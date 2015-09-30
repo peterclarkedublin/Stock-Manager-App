@@ -19,11 +19,15 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
 import org.eclipse.wb.swing.FocusTraversalOnArray;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
 public class LocationsWindow extends JFrame {
 
 	private JPanel contentPane;
 	private Connection conn;
+	private int currentSelection;
+	private TNode selectedTNode;
 
 	public LocationsWindow (String db) {
 		// create a mysql database connection
@@ -44,6 +48,7 @@ public class LocationsWindow extends JFrame {
 		setTitle("Locations");
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setBounds(100, 100, 450, 300);
+		setResizable(false);
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (Exception e) {
@@ -68,42 +73,43 @@ public class LocationsWindow extends JFrame {
 		
 		JTree tree = new JTree();
 		
-		/*
-		 * Define a class for keeping track of the parent TreeNodes.
-		 * For each new location id, an instance of this class will be made for it
-		 * so that the location id and TreeNode can be pushed on a stack.
-		 * Subsequent queries will search for locations which have these
-		 * location ids and will be added into the associated TreeNode
-		 */ 
-		class LocationNode {
-			private int id;
-			private DefaultMutableTreeNode node;
-			LocationNode (int id, DefaultMutableTreeNode node) {
-				this.id = id;
-				this.node = node;
-			}
-			public int getId () { return this.id; }
-			public DefaultMutableTreeNode getNode () { return this.node; }
-			public String toString () { return String.valueOf(this.node); }
-		}
-		
-		class TNode {
-			private int id;
-			private String descr;
-			TNode (int id, String descr) { this.id = id; this.descr = descr; }
-			public String toString () { return this.descr; }
-			public int getId () { return this.id; } 
-		}
-		
 		tree.addTreeSelectionListener(new TreeSelectionListener() {
 			public void valueChanged(TreeSelectionEvent arg0) {
 				TreePath path = ((JTree)arg0.getSource()).getSelectionPath();
 				DefaultMutableTreeNode tn = (DefaultMutableTreeNode)path.getLastPathComponent();
-				System.out.println("Tree selection path : " + ((TNode)tn.getUserObject()).getId());
+				selectedTNode = (TNode)tn.getUserObject();
+				currentSelection = selectedTNode.getId();
+				System.out.println("Tree selection path id: " + ((TNode)tn.getUserObject()).getId());
 				
 			}
 		});
 		
+		tree.setModel(new DefaultTreeModel(createTreeModel()));
+
+		scrollPane.setViewportView(tree);
+		
+		JButton btnAdd = new JButton("Add");
+		btnAdd.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				new AddLocation (conn, selectedTNode);
+			}
+		});
+		btnAdd.setBounds(341, 10, 91, 23);
+		contentPane.add(btnAdd);
+		
+		JButton btnRemove = new JButton("Remove");
+		btnRemove.setBounds(341, 44, 91, 23);
+		contentPane.add(btnRemove);
+		
+		JButton btnEdit = new JButton("Edit");
+		btnEdit.setBounds(341, 78, 91, 23);
+		contentPane.add(btnEdit);
+		contentPane.setFocusTraversalPolicy(new FocusTraversalOnArray(new Component[]{tree, btnAdd, btnRemove, btnEdit}));
+		
+		setVisible(true);
+	}
+	
+	public DefaultMutableTreeNode createTreeModel () {
 		try {
 			DefaultMutableTreeNode nn;
 
@@ -155,29 +161,41 @@ public class LocationsWindow extends JFrame {
 				}
 			
 			} while (! levels.empty());
-
-			tree.setModel(new DefaultTreeModel(mn));
-
-			scrollPane.setViewportView(tree);
+			return mn;
 			
 		} catch (Exception e) {
 			System.out.print("\u001b[33;1m");
 			e.printStackTrace();
+			return null;
 		}
 		
-		JButton btnAdd = new JButton("Add");
-		btnAdd.setBounds(341, 10, 91, 23);
-		contentPane.add(btnAdd);
-		
-		JButton btnRemove = new JButton("Remove");
-		btnRemove.setBounds(341, 44, 91, 23);
-		contentPane.add(btnRemove);
-		
-		JButton btnEdit = new JButton("Edit");
-		btnEdit.setBounds(341, 78, 91, 23);
-		contentPane.add(btnEdit);
-		contentPane.setFocusTraversalPolicy(new FocusTraversalOnArray(new Component[]{tree, btnAdd, btnRemove, btnEdit}));
-		
-		setVisible(true);
 	}
 }
+
+/*
+ * Define a class for keeping track of the parent TreeNodes.
+ * For each new location id, an instance of this class will be made for it
+ * so that the location id and TreeNode can be pushed on a stack.
+ * Subsequent queries will search for locations which have these
+ * location ids and will be added into the associated TreeNode
+ */ 
+class LocationNode {
+	private int id;
+	private DefaultMutableTreeNode node;
+	LocationNode (int id, DefaultMutableTreeNode node) {
+		this.id = id;
+		this.node = node;
+	}
+	public int getId () { return this.id; }
+	public DefaultMutableTreeNode getNode () { return this.node; }
+	public String toString () { return String.valueOf(this.node); }
+}
+
+class TNode {
+	private int id;
+	private String descr;
+	TNode (int id, String descr) { this.id = id; this.descr = descr; }
+	public String toString () { return this.descr; }
+	public int getId () { return this.id; } 
+}
+
