@@ -65,9 +65,7 @@ public class ItemsWindow extends JFrame {
 				{
 
 					// create a mysql database connection
-//					String myDriver = "org.gjt.mm.mysql.Driver";
-//					String myUrl = "jdbc:mysql://127.0.0.1/stockdb";
-//					Class.forName(myDriver);
+
 					Connection conn = StockUtil.openDb();
 
 				      //String query1 = "SELECT * FROM item";
@@ -85,11 +83,8 @@ public class ItemsWindow extends JFrame {
 				      // create the java statement
 				      java.sql.Statement st = conn.createStatement();
 
-
 				      // execute the query, and get a java resultset
 				      ResultSet rs = st.executeQuery(query1);
-				      
-				      
 
 				      int numCounter;
 				      for(numCounter = 0; rs.next(); numCounter++);
@@ -102,10 +97,7 @@ public class ItemsWindow extends JFrame {
 				        sku = rs.getString(2);
 				        skuId = rs.getInt(5);
 				        String loc = rs.getString(3);
-				        
-
-				                
-				        
+				            
 				        //System.out.println(queryStockCount);
 				        
 				        // print the results
