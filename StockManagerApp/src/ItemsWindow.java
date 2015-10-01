@@ -65,10 +65,10 @@ public class ItemsWindow extends JFrame {
 				{
 
 					// create a mysql database connection
-					String myDriver = "org.gjt.mm.mysql.Driver";
-					String myUrl = "jdbc:mysql://127.0.0.1/stockdb";
-					Class.forName(myDriver);
-					Connection conn = DriverManager.getConnection(myUrl, "smadmin", "admin");
+//					String myDriver = "org.gjt.mm.mysql.Driver";
+//					String myUrl = "jdbc:mysql://127.0.0.1/stockdb";
+//					Class.forName(myDriver);
+					Connection conn = StockUtil.openDb();
 
 				      //String query1 = "SELECT * FROM item";
 

@@ -32,8 +32,6 @@ public class AddItemsWindow extends JFrame {
 	private JTextField qtyTextField;
 	String[][] skuArray = null;
 	private Connection skuConn;
-	String myDriver = "org.gjt.mm.mysql.Driver";
-	String myUrl = "jdbc:mysql://127.0.0.1/stockdb";
 
 	/**
 	 * Create the frame.
@@ -80,10 +78,10 @@ public class AddItemsWindow extends JFrame {
 		{
 
 			// create a mysql database connection
-			String myDriver = "org.gjt.mm.mysql.Driver";
-			String myUrl = "jdbc:mysql://127.0.0.1/stockdb";
-			Class.forName(myDriver);
-			skuConn = DriverManager.getConnection(myUrl, "smadmin", "admin");
+//			String myDriver = "org.gjt.mm.mysql.Driver";
+//			String myUrl = "jdbc:mysql://127.0.0.1/stockdb";
+//			Class.forName(myDriver);
+			skuConn = StockUtil.openDb();
 
 			//SKU database
 			String skuQuery = "SELECT * FROM sku";
@@ -165,7 +163,7 @@ public class AddItemsWindow extends JFrame {
 
 				// execute the query, and get a java resultset
 				try {
-					skuConn = DriverManager.getConnection(myUrl, "smadmin", "admin");
+					skuConn = StockUtil.openDb();
 					ResultSet manufRs = skuConn.createStatement().
 							executeQuery("SELECT descr FROM stockdb.manuf WHERE id="+skuArray[skuComboBox.getSelectedIndex()][4]);
 					if(manufRs.next())
@@ -222,8 +220,7 @@ public class AddItemsWindow extends JFrame {
 
 					// create a mysql database connection
 
-					Class.forName(myDriver);
-					Connection conn = DriverManager.getConnection(myUrl, "smadmin", "admin");
+					Connection conn = StockUtil.openDb();
 
 					// Item table mysql insert statement
 					String query = " insert into item (sku_id, location_id)"
