@@ -1,3 +1,7 @@
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
 /**
  * Utility methods for the stock management app
  * 
@@ -20,4 +24,25 @@ public class StockUtil {
 		return result.i;
 	}
 	
+	/**
+	 * Open a new connection to the database and return the new open connection reference
+	 * 
+	 * @returns sql Connection for the database or null if failed
+	 */
+	static public Connection openDb () {
+		String myDriver = "org.gjt.mm.mysql.Driver";
+		String myUrl = "jdbc:mysql://192.168.1.160/stockdb";
+		final Connection conn;
+		try {
+			Class.forName(myDriver);
+			conn = DriverManager.getConnection(myUrl, "smadmin", "admin");
+			return conn;
+		} catch (SQLException sqle) {
+			System.out.println(sqle);
+			return null;
+		} catch (Exception e) {
+			System.out.println(e);
+			return null;
+		}
+	}
 }
