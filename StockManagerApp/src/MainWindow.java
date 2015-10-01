@@ -31,6 +31,7 @@ public class MainWindow {
 				try {
 					MainWindow window = new MainWindow();
 					window.frmStockManagementApplication.setVisible(true);
+//					StockUtil.getLocation();
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -55,6 +56,7 @@ public class MainWindow {
 		frmStockManagementApplication.setBounds(100, 100, 365, 302);
 		frmStockManagementApplication.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmStockManagementApplication.getContentPane().setLayout(null);
+		frmStockManagementApplication.setResizable(false);
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (Exception e) {
@@ -157,6 +159,8 @@ public class MainWindow {
 		lblTodo.setBounds(10, 250, 186, 14);
 		frmStockManagementApplication.getContentPane().add(lblTodo);
 		frmStockManagementApplication.getContentPane().setFocusTraversalPolicy(new FocusTraversalOnArray(new Component[]{tblCalendar, btnLocations, btnStock, btnPersonnel, btnAccounting, btnCustomers, btnAdministration}));
+		frmStockManagementApplication.setFocusTraversalPolicy(new FocusTraversalOnArray(new Component[]{tblCalendar, btnLocations, btnStock, btnPersonnel, btnAccounting, btnCustomers, btnNotebook, btnAdministration}));
 	}
+	
 }
 
