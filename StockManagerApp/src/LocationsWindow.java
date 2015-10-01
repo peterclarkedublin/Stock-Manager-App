@@ -67,12 +67,14 @@ public class LocationsWindow extends JFrame {
 		scrollPane.setBounds(10, 11, 321, 251);
 		contentPane.add(scrollPane);
 		
-		JTree tree = new JTree();
+		final JTree tree = new JTree();
 		tree.addTreeSelectionListener(new TreeSelectionListener() {
 			public void valueChanged(TreeSelectionEvent arg0) {
 				TreePath path = ((JTree)arg0.getSource()).getSelectionPath();
-				DefaultMutableTreeNode tn = (DefaultMutableTreeNode)path.getLastPathComponent();
-				selectedTNode = (TNode)tn.getUserObject();
+				if (path != null) {
+					DefaultMutableTreeNode tn = (DefaultMutableTreeNode)path.getLastPathComponent();
+					selectedTNode = (TNode)tn.getUserObject();
+				}
 			}
 		});
 		tree.setModel(new DefaultTreeModel(createTreeModel(conn)));
@@ -81,17 +83,56 @@ public class LocationsWindow extends JFrame {
 		JButton btnAdd = new JButton("Add");
 		btnAdd.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				System.out.println("Getting new location...");
 				new AddLocation (conn, selectedTNode);
+				System.out.println("Updating JTree");
+				tree.setModel(new DefaultTreeModel(createTreeModel(conn)));
 			}
 		});
 		btnAdd.setBounds(341, 10, 91, 23);
 		contentPane.add(btnAdd);
 		
 		JButton btnRemove = new JButton("Remove");
+		btnRemove.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				// Give the user a chance to cancel
+				String q = "delete from location where id = " + selectedTNode.getId() + " or parent_id = " + selectedTNode.getId();
+				System.out.println("About to execute " + q);
+				if (JOptionPane.showConfirmDialog (null, 
+						"This operation will delete the selected\n"
+						+ "location AND ALL SUB-LOCATIONS.\n"
+						+ "It cannot be undone. Proceed?",
+						"Confirm delete location", 
+						JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) != 0) return;
+				// Delete the location and refresh the tree
+				try {
+					conn.prepareStatement(q).execute();
+					tree.setModel(new DefaultTreeModel(createTreeModel(conn)));
+				} catch (SQLException e1) {
+					JOptionPane.showMessageDialog (null, 
+							"There was an error deleting the location:\n"
+							+ e1.toString() + "\n"
+							+ "This operation has been cancelled",
+							"SQL error deleting location", 
+							JOptionPane.NO_OPTION);
+				}
+				return;
+
+			}
+		});
 		btnRemove.setBounds(341, 44, 91, 23);
 		contentPane.add(btnRemove);
 		
-		JButton btnEdit = new JButton("Edit");
+		JButton btnEdit = new JButton("Amend");
+		btnEdit.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				new AmendLocation(conn, selectedTNode);
+				System.out.println("Node id " + selectedTNode.getId());
+				if (selectedTNode.getId() < 0) {
+					tree.setModel(new DefaultTreeModel(createTreeModel(conn)));
+				}
+			}
+		});
 		btnEdit.setBounds(341, 78, 91, 23);
 		contentPane.add(btnEdit);
 		contentPane.setFocusTraversalPolicy(new FocusTraversalOnArray(new Component[]{tree, btnAdd, btnRemove, btnEdit}));
@@ -202,5 +243,6 @@ class TNode {
 	TNode (int id, String descr) { this.id = id; this.descr = descr; }
 	public String toString () { return this.descr; }
 	public int getId () { return this.id; } 
+	public void invalidate () { this.id = -1; }
 }
 
