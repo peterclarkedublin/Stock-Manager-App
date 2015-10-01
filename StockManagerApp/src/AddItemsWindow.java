@@ -32,6 +32,7 @@ public class AddItemsWindow extends JFrame {
 	private JTextField qtyTextField;
 	String[][] skuArray = null;
 	private Connection skuConn;
+	private int newLoc;
 
 	/**
 	 * Create the frame.
@@ -39,7 +40,7 @@ public class AddItemsWindow extends JFrame {
 	public AddItemsWindow () {
 		setTitle("Add Items To Stock");
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		setBounds(100, 100, 450, 170);
+		setBounds(100, 100, 450, 158);
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (Exception e) {
@@ -67,20 +68,12 @@ public class AddItemsWindow extends JFrame {
 		lblNewLabel_3.setBounds(348, 15, 65, 14);
 		contentPane.add(lblNewLabel_3);
 
-		JLabel lblNewLabel_4 = new JLabel("Location");
-		lblNewLabel_4.setBounds(10, 84, 47, 14);
-		contentPane.add(lblNewLabel_4);
-
 		//create string Array to populate combobox
 		String[] skuComboArray = null;
 
 		try
 		{
 
-			// create a mysql database connection
-//			String myDriver = "org.gjt.mm.mysql.Driver";
-//			String myUrl = "jdbc:mysql://127.0.0.1/stockdb";
-//			Class.forName(myDriver);
 			skuConn = StockUtil.openDb();
 
 			//SKU database
@@ -190,17 +183,9 @@ public class AddItemsWindow extends JFrame {
 		upcDesc.setBounds(288, 40, 46, 14);
 		contentPane.add(upcDesc);
 
-		String[] locId = {"1"};
-		JComboBox locComboBox = new JComboBox(locId);
-		locComboBox.setBounds(62, 81, 82, 20);
-		contentPane.add(locComboBox);
-
 		JLabel lblNewLabel_5 = new JLabel("ID");
 		lblNewLabel_5.setBounds(155, 15, 21, 14);
 		contentPane.add(lblNewLabel_5);
-
-
-
 
 		JButton btnAddItem = new JButton("Add Item");
 		btnAddItem.addActionListener(new ActionListener() {
@@ -209,7 +194,6 @@ public class AddItemsWindow extends JFrame {
 			}
 		});
 
-
 		JButton btnAddToDbse = new JButton("Save");
 		btnAddToDbse.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -217,7 +201,6 @@ public class AddItemsWindow extends JFrame {
 				//add product to database
 				try
 				{
-
 					// create a mysql database connection
 
 					Connection conn = StockUtil.openDb();
@@ -229,7 +212,7 @@ public class AddItemsWindow extends JFrame {
 					// Item table mysql insert preparedstatement
 					PreparedStatement preparedStmt = (PreparedStatement) conn.prepareStatement(query);
 					preparedStmt.setString (1, String.valueOf(skuArray[skuComboBox.getSelectedIndex()][0]));
-					preparedStmt.setInt  (2, 1 );
+					preparedStmt.setInt  (2, newLoc );
 
 					//execute the preparedstatement
 					for(int i = 0; i < Integer.valueOf(qtyTextField.getText());i++){
@@ -238,7 +221,6 @@ public class AddItemsWindow extends JFrame {
 						
 						System.out.println("Item added # " + (i+1) + " added...");
 					}
-
 
 					conn.close();
 				}
@@ -252,9 +234,18 @@ public class AddItemsWindow extends JFrame {
 		});
 		btnAddToDbse.setBounds(333, 84, 91, 23);
 		contentPane.add(btnAddToDbse);
-
+		
+		JButton btnNewButton = new JButton("Select Location");
+		btnNewButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				
+				newLoc = StockUtil.getLocation();
+	
+			}
+		});
+		btnNewButton.setBounds(10, 84, 112, 23);
+		contentPane.add(btnNewButton);
 
 		setVisible(true);
 	}
-
 }

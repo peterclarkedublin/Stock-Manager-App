@@ -24,7 +24,6 @@ public class ItemsWindow extends JFrame {
 
 	private JPanel contentPane;
 	private JTable table;
-    int stockAmnt;
     String sku;
     int skuId;
 
@@ -50,8 +49,8 @@ public class ItemsWindow extends JFrame {
 		scrollPane.setBounds(10, 11, 348, 280);
 		contentPane.add(scrollPane);
 
-
 		table = new JTable();
+		table.setRowSelectionAllowed(false);
 
 		table.setFillsViewportHeight(true);
 		scrollPane.setViewportView(table);
@@ -65,21 +64,18 @@ public class ItemsWindow extends JFrame {
 				{
 
 					// create a mysql database connection
-
 					Connection conn = StockUtil.openDb();
 
-				      //String query1 = "SELECT * FROM item";
-
-				      String query1 = "SELECT  item.id, sku.sku, location.descr, manuf.descr, item.sku_id\n" +
-								      "from item\n" +
-								      "inner join sku\n" +
-								      "on item.sku_id=sku.id\n" +
-								      "inner join location\n" +
-								      "on item.location_id=location.id\n" +
-								      "inner join manuf\n" +
-								      "on sku.manuf_id=manuf.id";
-				      
-
+				      String query1 = "SELECT  count(1) as count, sku.sku, location.descr, manuf.descr\n" +
+				    		  "from item\n" +
+				    		  "inner join sku\n" +
+				    		  "on item.sku_id=sku.id\n" +
+				    		  "inner join location\n" +
+				    		  "on item.location_id=location.id\n" +
+				    		  "inner join manuf\n" +
+				    		  "on sku.manuf_id=manuf.id\n" +
+				    		  "group by sku_id\n";
+				      			      
 				      // create the java statement
 				      java.sql.Statement st = conn.createStatement();
 
@@ -93,46 +89,22 @@ public class ItemsWindow extends JFrame {
 				      numCounter = 0;
 
 				      while (rs.next()){
-				        int id = rs.getInt(1);
+				        int qty = rs.getInt(1);
 				        sku = rs.getString(2);
-				        skuId = rs.getInt(5);
 				        String loc = rs.getString(3);
+				        String desc = rs.getString(4);
 				            
-				        //System.out.println(queryStockCount);
-				        
-				        // print the results
-				        System.out.println("" + id + sku + loc);
-
-						itemArray[numCounter][0] = String.valueOf(id);
+						itemArray[numCounter][0] = String.valueOf(qty);
 						itemArray[numCounter][1] = sku;
-						itemArray[numCounter][2] = loc;
-						
-				        //count stock by SKU 
-				        String queryStockCount =  "SELECT sku_id, count(1) as count\n" + 
-				        							"from stockdb.item\n" +
-				        							"WHERE sku_id ='"+skuId+"'\n" +
-				        							"group by sku_id" ;
-				        java.sql.Statement st1 = conn.createStatement();
-				        ResultSet countS = st1.executeQuery(queryStockCount);
-				        
-				        if(countS.next()){
-				        stockAmnt = countS.getInt(2);
-				        }
-						
-						itemArray[numCounter][3] = String.valueOf(stockAmnt);
+						itemArray[numCounter][2] = loc;			
+						itemArray[numCounter][3] = String.valueOf(desc);
 						numCounter++;
-						
-
 
 				      }
-
-
-				        
+	        
 						table.setModel(new DefaultTableModel(
-								itemArray,new String[] {"Id" , "SKU" , "Location" , "Qty In Stock"}
+								itemArray,new String[] {"Qty" , "SKU" , "Location" , "Decreiption"}
 								));
-
-
 					conn.close();
 				}
 				catch (Exception e)
@@ -141,8 +113,6 @@ public class ItemsWindow extends JFrame {
 					System.err.println(e.getMessage());
 					e.printStackTrace();
 				}
-
-
 			}
 		});
 
@@ -150,6 +120,11 @@ public class ItemsWindow extends JFrame {
 		contentPane.add(btnExamine);
 
 		JButton btnAdjust = new JButton("Adjust");
+		btnAdjust.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				new AdjustItemWindow();
+			}
+		});
 		btnAdjust.setBounds(368, 45, 91, 23);
 		contentPane.add(btnAdjust);
 
@@ -166,10 +141,4 @@ public class ItemsWindow extends JFrame {
 		setVisible(true);
 	}
 
-	public void updateTable(){
-
-
-
-
-	}
 }
