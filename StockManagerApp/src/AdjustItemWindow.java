@@ -38,11 +38,13 @@ public class AdjustItemWindow extends JFrame {
     int skuId;
     Object selectedItemId;
     Object selectedItemSku;
+    String selectedItem; //item passed in from itemWindow
 
 	/**
 	 * Create the frame.
 	 */
-	public AdjustItemWindow () {
+	public AdjustItemWindow (String selectedItem) {
+		this.selectedItem = selectedItem;
 		addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowActivated(WindowEvent arg0) {
@@ -51,7 +53,7 @@ public class AdjustItemWindow extends JFrame {
 			}
 		});
 		
-		setTitle("Items");
+		setTitle("Adjust Items");
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setBounds(100, 100, 485, 341);
 		try {
@@ -220,8 +222,10 @@ public class AdjustItemWindow extends JFrame {
 				      "inner join location\n" +
 				      "on item.location_id=location.id\n" +
 				      "inner join manuf\n" +
-				      "on sku.manuf_id=manuf.id";
-		      			      
+				      "on sku.manuf_id=manuf.id\n" +
+		      			"where sku.sku =\""+selectedItem+"\"";
+		      
+
 		      // create the java statement
 		      java.sql.Statement st = conn.createStatement();
 
