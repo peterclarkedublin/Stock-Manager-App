@@ -31,7 +31,6 @@ public class MainWindow {
 				try {
 					MainWindow window = new MainWindow();
 					window.frmStockManagementApplication.setVisible(true);
-//					StockUtil.getLocation();
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -76,7 +75,7 @@ public class MainWindow {
 		lblUstock.setBounds(10, 11, 186, 32);
 		frmStockManagementApplication.getContentPane().add(lblUstock);
 		
-		JLabel lblMonth1 = new JLabel("September");
+		JLabel lblMonth1 = new JLabel("October");
 		lblMonth1.setHorizontalAlignment(SwingConstants.CENTER);
 		lblMonth1.setBounds(10, 71, 186, 14);
 		frmStockManagementApplication.getContentPane().add(lblMonth1);
@@ -91,11 +90,11 @@ public class MainWindow {
 		tblCalendar.setModel(new DefaultTableModel(
 			new Object[][] {
 				{null, "M", "T", "W", "T", "F", "S", "S"},
-				{null, null, "1", "2", "3", "4", "5", "6"},
-				{null, "7", "8", "9", "10", "11", "12", "13"},
-				{null, "14", "15", "16", "17", "18", "19", "20"},
-				{null, "21", "22", "23", "24", "25", "26", "27"},
-				{null, "28", "29", "30", null, null, null, null},
+				{null, null, null, null, "1", "2", "3", "4"},
+				{null,  "5", "6", "7", "8", "9", "10", "11"},
+				{null, "12", "13", "14", "15", "16", "17", "18"},
+				{null, "19", "20", "21", "22", "23", "24", "25"},
+				{null, "26", "27", "28", "29", "30", null, null},
 			},
 			new String[] {
 				"New Column", "New column", "New column", "New column", "New column", "New column", "New column", "New column"
@@ -123,7 +122,11 @@ public class MainWindow {
 		frmStockManagementApplication.getContentPane().add(btnStock);
 		
 		JButton btnPersonnel = new JButton("Personnel");
-		btnPersonnel.setEnabled(false);
+		btnPersonnel.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				new PersonnelWindow();
+			}
+		});
 		btnPersonnel.setBounds(232, 79, 114, 23);
 		frmStockManagementApplication.getContentPane().add(btnPersonnel);
 		
@@ -155,7 +158,7 @@ public class MainWindow {
 		lblLoginState.setBounds(10, 225, 186, 14);
 		frmStockManagementApplication.getContentPane().add(lblLoginState);
 		
-		JLabel lblTodo = new JLabel("0 Notification, 0 Tasks");
+		JLabel lblTodo = new JLabel("0 Notifications, 0 Tasks");
 		lblTodo.setBounds(10, 250, 186, 14);
 		frmStockManagementApplication.getContentPane().add(lblTodo);
 		frmStockManagementApplication.getContentPane().setFocusTraversalPolicy(new FocusTraversalOnArray(new Component[]{tblCalendar, btnLocations, btnStock, btnPersonnel, btnAccounting, btnCustomers, btnAdministration}));
