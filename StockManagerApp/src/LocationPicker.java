@@ -24,34 +24,37 @@ import javax.swing.tree.TreePath;
 
 import org.eclipse.wb.swing.FocusTraversalOnArray;
 
+/**
+ * LocationPicker
+ * Provides a convenience class that can be called by any window to bring up a
+ * dialog from which a location can be selected.
+ * 
+ * The method to call for using this class is StockUtil.getLocation() which will 
+ * open this window and retrieve the id of the row in the location table containing
+ * the location which was selected (-1 if no location was selected)
+ * 
+ * This class opens a new database connection so the caller does not need to
+ * have an active connection ready just to get a location.
+ * 
+ * @see StockUtil
+ * @author Kevin Phair
+ * @date 30 Sep 2015
+ */
 @SuppressWarnings("serial")
 public class LocationPicker extends JDialog {
 
 	private JPanel contentPane;
-	private Connection conn;
 	private JDialog pickerWindow;
 	private JButton btnOK;
+	private Connection conn;
 
 	public LocationPicker (String db, final IntResult result) {
 		
 		result.i = -1;
 		pickerWindow = this;
 		
-		// create a mysql database connection
-		String myDriver = "org.gjt.mm.mysql.Driver";
-		String myUrl = "jdbc:mysql://192.168.1.160/" + db;
-		try {
-			Class.forName(myDriver);
-			conn = DriverManager.getConnection(myUrl, "smadmin", "admin");
-		} catch (SQLException sqle) {
-			System.out.println(sqle);
-			result.i = -2;
-			return;
-		} catch (Exception e) {
-			System.out.println(e);
-			result.i = -2;
-			return;
-		}
+		conn = StockUtil.openDb();
+		
 		System.out.println("Connected to database " + db + " as connection " + conn);
 
 		setTitle("Select a location");
@@ -73,43 +76,8 @@ public class LocationPicker extends JDialog {
 		JScrollPane scrollPane = new JScrollPane();
 		scrollPane.setBounds(10, 11, 321, 304);
 		contentPane.add(scrollPane);
-		
-		
-		/*
-		 * For top level hierarchy, select * from location where parent = 0;
-		 * Add those results as top level nodes. Then select * from location where parent = node_id
-		 * and add those results to each of their parent nodes
-		 */
-		
+	
 		JTree tree = new JTree();
-		
-		/*
-		 * Define a class for keeping track of the parent TreeNodes.
-		 * For each new location id, an instance of this class will be made for it
-		 * so that the location id and TreeNode can be pushed on a stack.
-		 * Subsequent queries will search for locations which have these
-		 * location ids and will be added into the associated TreeNode
-		 */ 
-		class LocationNode {
-			private int id;
-			private DefaultMutableTreeNode node;
-			LocationNode (int id, DefaultMutableTreeNode node) {
-				this.id = id;
-				this.node = node;
-			}
-			public int getId () { return this.id; }
-			public DefaultMutableTreeNode getNode () { return this.node; }
-			public String toString () { return String.valueOf(this.node); }
-		}
-		
-		class TNode {
-			private int id;
-			private String descr;
-			TNode (int id, String descr) { this.id = id; this.descr = descr; }
-			public String toString () { return this.descr; }
-			public int getId () { return this.id; } 
-		}
-		
 		tree.addTreeSelectionListener(new TreeSelectionListener() {
 			public void valueChanged(TreeSelectionEvent arg0) {
 				TreePath path = ((JTree)arg0.getSource()).getSelectionPath();
@@ -119,67 +87,8 @@ public class LocationPicker extends JDialog {
 				btnOK.setEnabled(true);
 			}
 		});
-		
-		try {
-			DefaultMutableTreeNode nn;
-
-			System.out.println("Querying connection " + conn);
-			Stack<LocationNode> levels = null;
-			LocationNode levelNode = null;
-			ResultSet rs = null;
-			
-			// Create the master tree node
-			DefaultMutableTreeNode mn = new DefaultMutableTreeNode(new TNode (0, "All locations"));
-			// top node which will track for the parent node as the recursive search progresses
-			DefaultMutableTreeNode tn = mn;
-
-			do {
-				if (levels == null) {
-					// First go around, initialise the stack and get the top level locations
-					levels = new Stack<LocationNode>();
-					rs = conn.createStatement().executeQuery("select * from location where parent_id is null");
-					System.out.println("Initialising stack and creating master tree node");
-					
-				} else {
-					// on successive iterations, pop a location off the stack and find children of it
-					levelNode = levels.pop();
-					tn = levelNode.getNode();
-					System.out.println("Popped " + levelNode.getId() + ":" + tn.getUserObject() + " off the stack");
-					System.out.println("SQL 'select * from location where parent_id = " + levelNode.getId() + "'");
-					rs = conn.createStatement().executeQuery("select * from location where parent_id = " + levelNode.getId());
-				}
-
-				if (rs.next()) {
-
-					System.out.println("Populating treeview");
-					
-					// Now add location nodes
-					do {
-						// Create a new TreeNode for this location
-						nn = new DefaultMutableTreeNode(new TNode (rs.getInt(1), rs.getString(2)));
-						
-						// If this is a new node id, push it on the stack
-						//if (levels.search(rs.getString(1)) == 0) {
-							System.out.println("Pushing " + rs.getString(1) + " onto stack");
-							levels.push(new LocationNode(rs.getInt(1), nn));
-						//}
-						
-						// Add the node to the tree
-						tn.add (nn);
-						
-					} while (rs.next());
-				}
-			
-			} while (! levels.empty());
-
-			tree.setModel(new DefaultTreeModel(mn));
-
-			scrollPane.setViewportView(tree);
-			
-		} catch (Exception e) {
-			System.out.print("\u001b[33;1m");
-			e.printStackTrace();
-		}
+		tree.setModel(new DefaultTreeModel(LocationsWindow.createTreeModel(conn)));
+		scrollPane.setViewportView(tree);
 		
 		btnOK = new JButton("OK");
 		btnOK.addActionListener(new ActionListener() {
@@ -207,6 +116,14 @@ public class LocationPicker extends JDialog {
 
 }
 
+/**
+ * A placeholder class to hold the result from the picker window. Can't use
+ * Integer class because that's immutable and changes to the result value
+ * would not be passed back due to the original Integer object being discarded
+ * 
+ * @author Kevin Phair
+ * @date 30 Sep 2015
+ */
 class IntResult {
 	int i;
 	public IntResult () { this.i = -1; }
