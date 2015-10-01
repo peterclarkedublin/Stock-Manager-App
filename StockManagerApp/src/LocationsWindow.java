@@ -1,4 +1,6 @@
 import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -7,6 +9,7 @@ import java.util.Stack;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
@@ -19,30 +22,30 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
 import org.eclipse.wb.swing.FocusTraversalOnArray;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
 
+/**
+ * A window which displays all the locations in the database and allows the
+ * user to add, modify or delete items in this table.
+ * 
+ * @author Kevin Phair
+ * @date 30 Sep 2015
+ */
 public class LocationsWindow extends JFrame {
 
 	private JPanel contentPane;
-	private Connection conn;
-	private int currentSelection;
 	private TNode selectedTNode;
 
 	public LocationsWindow (String db) {
-		// create a mysql database connection
-		String myDriver = "org.gjt.mm.mysql.Driver";
-		String myUrl = "jdbc:mysql://192.168.1.160/" + db;
-		try {
-			Class.forName(myDriver);
-			conn = DriverManager.getConnection(myUrl, "smadmin", "admin");
-		} catch (SQLException sqle) {
-			System.out.println(sqle);
+		final Connection conn = StockUtil.openDb();
+		if (conn == null) {
+			JOptionPane.showMessageDialog (null, 
+					"There was an error opening the database\n"
+					+ "Please check the server and/or network connection", 
+					"Database connection error",
+					JOptionPane.NO_OPTION);
 			return;
-		} catch (Exception e) {
-			System.out.println(e);
-			return;
-		}
+		};
+		
 		System.out.println("Connected to database " + db + " as connection " + conn);
 
 		setTitle("Locations");
@@ -64,28 +67,15 @@ public class LocationsWindow extends JFrame {
 		scrollPane.setBounds(10, 11, 321, 251);
 		contentPane.add(scrollPane);
 		
-		
-		/*
-		 * For top level hierarchy, select * from location where parent = 0;
-		 * Add those results as top level nodes. Then select * from location where parent = node_id
-		 * and add those results to each of their parent nodes
-		 */
-		
 		JTree tree = new JTree();
-		
 		tree.addTreeSelectionListener(new TreeSelectionListener() {
 			public void valueChanged(TreeSelectionEvent arg0) {
 				TreePath path = ((JTree)arg0.getSource()).getSelectionPath();
 				DefaultMutableTreeNode tn = (DefaultMutableTreeNode)path.getLastPathComponent();
 				selectedTNode = (TNode)tn.getUserObject();
-				currentSelection = selectedTNode.getId();
-				System.out.println("Tree selection path id: " + ((TNode)tn.getUserObject()).getId());
-				
 			}
 		});
-		
-		tree.setModel(new DefaultTreeModel(createTreeModel()));
-
+		tree.setModel(new DefaultTreeModel(createTreeModel(conn)));
 		scrollPane.setViewportView(tree);
 		
 		JButton btnAdd = new JButton("Add");
@@ -109,7 +99,18 @@ public class LocationsWindow extends JFrame {
 		setVisible(true);
 	}
 	
-	public DefaultMutableTreeNode createTreeModel () {
+	/**
+	 * createTreeModel
+	 * Create a TreeNode hierarchy which can be passed into the JTree's setModel method.
+	 * For the top level hierarchy, "select * from location where parent = 0".
+	 * Add those results as top level nodes. Then select * from location where parent = node_id
+	 * and add those results to each of their parent nodes.
+	 * A stack is used to recusively scan the hierarchy in the database tables.
+	 * 
+	 * @param the database connection currently open by the caller
+	 * @return a DefaultMutableTreeNode which links all the location nodes together
+	 */
+	public static DefaultMutableTreeNode createTreeModel (final Connection conn) {
 		try {
 			DefaultMutableTreeNode nn;
 
@@ -126,9 +127,9 @@ public class LocationsWindow extends JFrame {
 			do {
 				if (levels == null) {
 					// First go around, initialise the stack and get the top level locations
-					levels = new Stack<LocationNode>();
-					rs = conn.createStatement().executeQuery("select * from location where parent_id is null");
 					System.out.println("Initialising stack and creating master tree node");
+					levels = new Stack<LocationNode>();
+					rs = conn.createStatement().executeQuery("select * from location where parent_id = 0");
 					
 				} else {
 					// on successive iterations, pop a location off the stack and find children of it
@@ -172,7 +173,7 @@ public class LocationsWindow extends JFrame {
 	}
 }
 
-/*
+/**
  * Define a class for keeping track of the parent TreeNodes.
  * For each new location id, an instance of this class will be made for it
  * so that the location id and TreeNode can be pushed on a stack.
@@ -191,6 +192,10 @@ class LocationNode {
 	public String toString () { return String.valueOf(this.node); }
 }
 
+/**
+ * A placeholder class so that a TreeNode in the JTree's data model can hold the 
+ * location's row id column as well as the string that's displayed on screen
+ */
 class TNode {
 	private int id;
 	private String descr;
