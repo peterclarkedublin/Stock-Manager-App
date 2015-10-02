@@ -117,10 +117,10 @@ public class AddItemsWindow extends JFrame {
 					skuComboArray[i] = skuArray[i][2];
 				}
 
-				for(String str: skuComboArray){
-
-					System.out.println(str);
-				}
+//				for(String str: skuComboArray){
+//
+//					System.out.println(str);
+//				}
 
 			}
 

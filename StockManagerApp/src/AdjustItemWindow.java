@@ -25,6 +25,8 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeEvent;
 import java.awt.event.MouseAdapter;
@@ -36,9 +38,13 @@ public class AdjustItemWindow extends JFrame {
 	private JTable table;
     String sku;
     int skuId;
-    Object selectedItemId;
+    Object selectedItemQty;
     Object selectedItemSku;
     String selectedItem; //item passed in from itemWindow
+	private int[] itemLocId;
+	private int selectedRow;
+	private JButton btnEdit;
+	private JButton btnDelete;
 
 	/**
 	 * Create the frame.
@@ -83,6 +89,7 @@ public class AdjustItemWindow extends JFrame {
 
 		table = new JTable();
 		table.addMouseListener(new MouseAdapter() {
+
 			@Override
 			public void mouseClicked(MouseEvent e)
 			{
@@ -92,13 +99,19 @@ public class AdjustItemWindow extends JFrame {
 
 					JTable target = (JTable)e.getSource();
 
-					int selectedRow = target.getSelectedRow();
+					selectedRow = target.getSelectedRow();
 
-					selectedItemId=target.getValueAt(selectedRow, 0);
-					selectedItemSku=target.getValueAt(selectedRow, 1);
+					if(selectedRow >= 0){
+						selectedItemQty=target.getValueAt(selectedRow, 0);
+						selectedItemSku=target.getValueAt(selectedRow, 1);
 					
+						btnEdit.setEnabled(true);
+						btnDelete.setEnabled(true);
+						
 					selectedItemTxt.setText(selectedItemSku.toString());
+					}
 					//System.out.println(selectedItemId);
+					
 				}
 			}
 		});
@@ -127,12 +140,29 @@ public class AdjustItemWindow extends JFrame {
 		btnAddItem.setBounds(371, 45, 89, 23);
 		contentPane.add(btnAddItem);
 		
-		JButton btnNewButton = new JButton("Edit Loc.");
-		btnNewButton.addActionListener(new ActionListener() {
+		btnEdit = new JButton("Edit Loc.");
+		btnEdit.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				
+				String moveQty = JOptionPane.showInputDialog(null,
+                        "Enter Qty to move (1 - " + selectedItemQty + " ) ?", null);
+				try {
+					if(moveQty == null || moveQty.length() == 0 || Integer.parseInt(moveQty) < 1 || Integer.parseInt(moveQty) > Integer.parseInt(selectedItemQty.toString())){
+						
+						return;
+					}
+				} catch (NumberFormatException e2) {
+					// TODO Auto-generated catch block
+					return;
+				}
+				
 				int newLoc = StockUtil.getLocation();
-				System.out.println(newLoc);
+				
+				if(newLoc == -1){
+					return;
+				}
+				
+				//System.out.println(newLoc);
 				
 				//update the item's location
 				
@@ -140,14 +170,32 @@ public class AdjustItemWindow extends JFrame {
 			    {
 			      // create the mysql database connection
 			      Connection updateItem = StockUtil.openDb();
-			   
-			      String queryUpdateItem = "update stockdb.item set location_id = ? where id = ?";
-			      PreparedStatement preparedStmt = (PreparedStatement) updateItem.prepareStatement(queryUpdateItem);
-			      preparedStmt.setInt   (1, newLoc);
-			      preparedStmt.setString(2, selectedItemId.toString());
- 
-			      // execute the preparedstatement
-			      preparedStmt.execute();
+			      
+			      String queryQtyMove = "SELECT item.id from item where item.location_id =" + itemLocId[selectedRow] +
+			    		  				" and item.sku_id = " + skuId;
+	      
+			      System.out.println(queryQtyMove);
+			      
+			      ResultSet rs2 = updateItem.createStatement().executeQuery(queryQtyMove);
+		
+			      if(rs2.next()){
+			    	  System.out.println("Moving " + moveQty + "items");
+			    	  for(int i = 0; i < Integer.parseInt(moveQty); i++){
+			    		  
+			    		  String queryUpdateItem = "update stockdb.item set location_id = ? where id = ?";
+			    		  System.out.println(queryUpdateItem);
+
+			    		  PreparedStatement preparedStmt = (PreparedStatement) updateItem.prepareStatement(queryUpdateItem);
+
+			    		  preparedStmt.setInt(1, newLoc);
+
+			    		  preparedStmt.setInt(2, rs2.getInt(1));
+
+			    		  // execute the preparedstatement
+			    		  preparedStmt.execute();
+			    		  rs2.next();
+			    	  }
+			      }
 			       
 			      updateItem.close();
 
@@ -161,41 +209,74 @@ public class AdjustItemWindow extends JFrame {
 				
 			}
 		});
-		btnNewButton.setBounds(371, 237, 89, 23);
-		contentPane.add(btnNewButton);
+		btnEdit.setBounds(371, 237, 89, 23);
+		btnEdit.setEnabled(false);
+		contentPane.add(btnEdit);
 		
-		JButton btnNewButton_1 = new JButton("Delete");
-		btnNewButton_1.addActionListener(new ActionListener() {
+		btnDelete = new JButton("Delete");
+		btnDelete.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				
-				//delete selected item id from database
+				String deleteQty = JOptionPane.showInputDialog(null,
+                        "Enter Qty to delete (1 - " + selectedItemQty + " ) ?", null);
+				try {
+					if(deleteQty == null || deleteQty.length() == 0 || Integer.parseInt(deleteQty) < 1 || Integer.parseInt(deleteQty) > Integer.parseInt(selectedItemQty.toString())){
+						return;
+					}
+				} catch (NumberFormatException e2) {
+					return;
+				}
 				
-				try
-			    {
-			      // create the mysql database connection
-			      Connection deleteItem = StockUtil.openDb();
-			   
-			      String queryDelete = "delete from stockdb.item where id = ?" ;
-			      PreparedStatement preparedStmt = (PreparedStatement) deleteItem.prepareStatement(queryDelete);
-			      preparedStmt.setInt(1, Integer.parseInt(selectedItemId.toString()));
-			 
-			      // execute the preparedstatement
-			      preparedStmt.execute();
-			       
-			      deleteItem.close();
-			      
-			      System.out.println("Item deleted");
-			    }
-			    catch (Exception e1)
-			    {
-			      System.err.println("Got an exception! ");
-			      System.err.println(e1.getMessage());
-			    }
+				// delete selected item id from database
+				try {
+					// create the mysql database connection
+					Connection deleteItem = StockUtil.openDb();
+
+					String queryDelete = "SELECT item.id from item where item.location_id =" + itemLocId[selectedRow]
+							+ " and item.sku_id = " + skuId;
+					System.out.println(queryDelete);
+					ResultSet rs2 = deleteItem.createStatement().executeQuery(queryDelete);
+
+					if (rs2.next()) {
+						System.out.println("Deleting " + deleteQty + " items");
+						for (int i = 0; i < Integer.parseInt(deleteQty); i++) {
+
+							String queryDeleteItem = "delete from stockdb.item where id = ?";
+							System.out.println(queryDeleteItem);
+
+							PreparedStatement preparedStmt = (PreparedStatement) deleteItem
+									.prepareStatement(queryDeleteItem);
+
+							preparedStmt.setInt(1, rs2.getInt(1));
+
+							// execute the preparedstatement
+							preparedStmt.execute();
+							rs2.next();
+						}
+					}
+					// String queryDelete = "delete from stockdb.item where id =
+					// ?" ;
+					// PreparedStatement preparedStmt = (PreparedStatement)
+					// deleteItem.prepareStatement(queryDelete);
+					// preparedStmt.setInt(1,
+					// Integer.parseInt(selectedItemQty.toString()));
+					//
+					// // execute the preparedstatement
+					// preparedStmt.execute();
+
+					deleteItem.close();
+
+					updateTable();
+				} catch (Exception e1) {
+					System.err.println("Got an exception! ");
+					System.err.println(e1.getMessage());
+				}
 
 			}
 		});
-		btnNewButton_1.setBounds(371, 271, 89, 23);
-		contentPane.add(btnNewButton_1);
+		btnDelete.setBounds(371, 271, 89, 23);
+		btnDelete.setEnabled(false);
+		contentPane.add(btnDelete);
 		
 		JLabel selectedItemLbl = new JLabel("Selected Item:");
 		selectedItemLbl.setBounds(368, 189, 70, 14);
@@ -215,7 +296,7 @@ public class AdjustItemWindow extends JFrame {
 			// create a mysql database connection
 			Connection conn = StockUtil.openDb();
 
-		      String query1 = "SELECT  item.id, sku.sku, location.descr, manuf.descr, item.sku_id\n" +
+		      String query1 = "SELECT count(1) as count, sku.sku, location.descr, manuf.descr, item.sku_id, item.location_id\n" +
 				      "from item\n" +
 				      "inner join sku\n" +
 				      "on item.sku_id=sku.id\n" +
@@ -223,7 +304,8 @@ public class AdjustItemWindow extends JFrame {
 				      "on item.location_id=location.id\n" +
 				      "inner join manuf\n" +
 				      "on sku.manuf_id=manuf.id\n" +
-		      			"where sku.sku =\""+selectedItem+"\"";
+		      			"where sku.sku =\""+selectedItem+"\"\n" +
+		      			"group by item.location_id";
 		      
 
 		      // create the java statement
@@ -235,25 +317,29 @@ public class AdjustItemWindow extends JFrame {
 		      int numCounter;
 		      for(numCounter = 0; rs.next(); numCounter++);
 			  String[][] itemArray = new String[numCounter][4];
+			  itemLocId = new int[numCounter];
 			  rs.beforeFirst();
 		      numCounter = 0;
 
 		      while (rs.next()){
+		    	System.out.print(".");
 		        int qty = rs.getInt(1);
 		        sku = rs.getString(2);
 		        String loc = rs.getString(3);
-		        String desc = rs.getString(4);
+		        String manuf = rs.getString(4);
+		        skuId = rs.getInt(5);
+		        itemLocId[numCounter] = rs.getInt(6);
 		            
 				itemArray[numCounter][0] = String.valueOf(qty);
 				itemArray[numCounter][1] = sku;
 				itemArray[numCounter][2] = loc;			
-				itemArray[numCounter][3] = String.valueOf(desc);
+				itemArray[numCounter][3] = manuf;
 				numCounter++;
 
 		      }
     
 				table.setModel(new DefaultTableModel(
-						itemArray,new String[] {"Item ID" , "SKU" , "Location" , "Decreiption"}
+						itemArray,new String[] {"Qty" , "SKU" , "Location" , "Manufacturer"}
 						));
 			conn.close();
 		}

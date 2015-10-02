@@ -29,6 +29,7 @@ public class ItemsWindow extends JFrame {
     String sku;
     int skuId;
     String selectedItem;
+	private JButton btnAdjust;
     
 
 	/**
@@ -68,11 +69,15 @@ public class ItemsWindow extends JFrame {
 
 					int selectedRow = target.getSelectedRow();
 
-					selectedItem = target.getValueAt(selectedRow, 1).toString();
-					//selectedItemSku=target.getValueAt(selectedRow, 1);
-					
-					//selectedItemTxt.setText(selectedItemSku.toString());
-					//System.out.println(selectedItemId);
+					if (selectedRow >= 0) {
+						btnAdjust.setEnabled(true);
+						selectedItem = target.getValueAt(selectedRow, 1).toString();
+						//selectedItemSku=target.getValueAt(selectedRow, 1);
+						
+						//selectedItemTxt.setText(selectedItemSku.toString());
+						//System.out.println(selectedItemId);
+					}
+
 				}
 			}
 		});
@@ -94,13 +99,14 @@ public class ItemsWindow extends JFrame {
 		btnExamine.setBounds(368, 8, 91, 23);
 		contentPane.add(btnExamine);
 
-		JButton btnAdjust = new JButton("Adjust");
+		btnAdjust = new JButton("Adjust");
 		btnAdjust.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				new AdjustItemWindow(selectedItem);
 			}
 		});
 		btnAdjust.setBounds(368, 45, 91, 23);
+		btnAdjust.setEnabled(false);
 		contentPane.add(btnAdjust);
 
 		JButton btnAddItem = new JButton("Add Item");
